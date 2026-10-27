@@ -7,7 +7,6 @@ import {
   Users,
   Truck,
   Menu,
-  
   HardHat,
   ClipboardList,
   ShieldCheck,
@@ -22,7 +21,7 @@ import {
   Smartphone,
   FileSpreadsheet,
   Tag,
-
+  Wrench,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -35,12 +34,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-
-
 import { cn } from "@/lib/utils";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { canAccess, landingRouteFor } from "@/lib/role-access";
-import logoAsset from "@/assets/logo-engelog.png.asset.json";
 import { toast } from "sonner";
 import { NotificationsBell } from "@/components/notifications-bell";
 import { OfflineIndicator } from "@/components/offline-indicator";
@@ -48,7 +44,6 @@ import { useAppSync } from "@/hooks/use-app-sync";
 import { useMaterialWatch } from "@/hooks/use-material-watch";
 import { startInstallCapture } from "@/lib/install-prompt";
 import { COMPRAS_URL_PUBLIC } from "@/integrations/compras/client";
-
 
 const NAV = [
   { to: "/", label: "Início", icon: LayoutDashboard },
@@ -62,13 +57,11 @@ const NAV = [
   { to: "/pmp", label: "Catálogo PMP", icon: BookOpen },
   { to: "/relatorios", label: "Relatórios", icon: FileSpreadsheet },
   { to: "/seminovos", label: "Seminovos", icon: Tag },
-
 ] as const;
 
 function useVisibleNav(roles: AppRole[]) {
   return NAV.filter((n) => canAccess(roles, n.to));
 }
-
 
 function UserMenu() {
   const { profile, user, roles, signOut } = useAuth();
@@ -126,7 +119,7 @@ function UserMenu() {
               const stamp = new Date().toISOString().replace(/[:.]/g, "-");
               const safeName = (profile?.nome || user?.email || "usuario").replace(/[^a-z0-9-_]+/gi, "_");
               a.href = url;
-              a.download = `plannermatriz-backup-${safeName}-${stamp}.json`;
+              a.download = `gestao-oficina-backup-${safeName}-${stamp}.json`;
               a.click();
               URL.revokeObjectURL(url);
               toast.success("Backup dos seus dados baixado");
@@ -156,6 +149,19 @@ function UserMenu() {
   );
 }
 
+function Brand({ compact = false }: { compact?: boolean }) {
+  return (
+    <div className={cn("flex items-center", compact ? "gap-1.5" : "flex-col gap-2 text-center")} translate="no">
+      <div className={cn("flex items-center justify-center rounded-lg bg-sidebar-accent text-sidebar-accent-foreground", compact ? "h-8 w-8" : "h-11 w-11")}>
+        <Wrench className={compact ? "h-4 w-4" : "h-6 w-6"} />
+      </div>
+      <div className={compact ? "" : "text-center"}>
+        <div className={cn("font-display font-bold leading-tight", compact ? "text-[10px]" : "text-sm")}>GESTÃO DE OFICINA</div>
+        {!compact && <div className="text-[10px] uppercase tracking-wider text-sidebar-foreground/60">Manutenção e Equipamentos</div>}
+      </div>
+    </div>
+  );
+}
 
 function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void; collapsed?: boolean }) {
   const pathname = useRouterState({ select: (r) => r.location.pathname });
@@ -164,19 +170,10 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
   return (
     <nav translate="no" className="flex flex-col gap-1 p-3" style={{ fontFamily: "inherit" }}>
       <div className="mb-4 px-2 pt-2">
-        <div className="flex flex-col items-center gap-2 text-center">
-          <img src="/logo.png" alt="Engelog" className={cn("w-auto rounded bg-white p-1.5", collapsed ? "h-9" : "h-14")} />
-          {!collapsed && (
-            <div translate="no">
-              <div className="font-display text-sm font-bold leading-tight text-sidebar-foreground" translate="no">PLANNER MATRIZ</div>
-              <div className="text-[10px] uppercase tracking-wider text-sidebar-foreground/60" translate="no">Fluxo de Máquinas</div>
-            </div>
-          )}
-        </div>
+        {collapsed ? <div className="flex justify-center"><Wrench className="h-6 w-6 text-sidebar-foreground" /></div> : <Brand />}
       </div>
       {items.map((n) => {
-        const active =
-          n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
+        const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
         const Icon = n.icon;
         return (
           <Link
@@ -187,9 +184,7 @@ function SidebarNav({ onNavigate, collapsed = false }: { onNavigate?: () => void
             className={cn(
               "tap-target flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
               collapsed && "justify-center",
-              active
-                ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+              active ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
             )}
           >
             <Icon className="h-5 w-5 shrink-0" />
@@ -224,32 +219,15 @@ function BottomNav() {
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur md:hidden">
       <div className="grid" style={{ gridTemplateColumns: `repeat(${items.length + 1}, minmax(0, 1fr))` }}>
         {items.map((n) => {
-          const active =
-            n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
+          const active = n.to === "/" ? pathname === "/" : pathname.startsWith(n.to);
           const Icon = n.icon;
           return (
-            <Link
-              key={n.to}
-              to={n.to}
-              title={n.label}
-              aria-label={n.label}
-              className={cn(
-                "flex items-center justify-center py-3",
-                active ? "text-primary" : "text-muted-foreground",
-              )}
-            >
+            <Link key={n.to} to={n.to} title={n.label} aria-label={n.label} className={cn("flex items-center justify-center py-3", active ? "text-primary" : "text-muted-foreground")}>
               <Icon className={cn("h-5 w-5 shrink-0", active && "text-primary")} />
             </Link>
           );
         })}
-        <a
-          href={COMPRAS_URL_PUBLIC}
-          target="_blank"
-          rel="noopener noreferrer"
-          title="Compras"
-          aria-label="Compras"
-          className="flex items-center justify-center py-3 text-muted-foreground"
-        >
+        <a href={COMPRAS_URL_PUBLIC} target="_blank" rel="noopener noreferrer" title="Compras" aria-label="Compras" className="flex items-center justify-center py-3 text-muted-foreground">
           <ShoppingCart className="h-5 w-5 shrink-0" />
         </a>
       </div>
@@ -264,24 +242,19 @@ function RouteGuard({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (loading) return;
-    // Perfil ainda não hidratado (logo após login/troca de senha): aguarda.
     if (!profile) return;
-    // Force password change on first access
     if (profile.must_change_password && pathname !== "/trocar-senha") {
       navigate({ to: "/trocar-senha" });
       return;
     }
-    // Role-based access
     if (!canAccess(roles, pathname)) {
       const landing = landingRouteFor(roles);
       if (landing !== pathname) {
-        // Redirecionamento silencioso a partir da raiz (pós-login/troca de senha).
         if (pathname !== "/") toast.error("Acesso não autorizado para o seu perfil");
         navigate({ to: landing });
       }
     }
   }, [loading, profile, roles, pathname, navigate]);
-
 
   return <>{children}</>;
 }
@@ -307,20 +280,12 @@ export function AppShell({ children }: { children: ReactNode }) {
     void import("@/lib/pwa").then((m) => m.registerPwa());
   }, []);
 
-
   return (
     <div className="min-h-screen w-full">
-      {/* Desktop sidebar */}
       <aside className={cn("fixed inset-y-0 left-0 z-30 hidden border-r border-sidebar-border bg-sidebar md:block transition-[width] duration-200", sidebarWidth)}>
         <div className="relative h-full overflow-y-auto">
           <SidebarNav collapsed={collapsed} />
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={toggleCollapsed}
-            aria-label={collapsed ? "Expandir menu" : "Recolher menu"}
-            className="absolute -right-3 top-16 h-6 w-6 rounded-full border-sidebar-border bg-background shadow"
-          >
+          <Button variant="outline" size="icon" onClick={toggleCollapsed} aria-label={collapsed ? "Expandir menu" : "Recolher menu"} className="absolute -right-3 top-16 h-6 w-6 rounded-full border-sidebar-border bg-background shadow">
             {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
           </Button>
         </div>
@@ -328,7 +293,6 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <div className={cn("flex min-h-screen flex-col", contentPad)}>
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-border bg-background/95 px-3 backdrop-blur md:px-6">
-          {/* Mobile menu */}
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="tap-target md:hidden">
@@ -339,28 +303,18 @@ export function AppShell({ children }: { children: ReactNode }) {
               <SidebarNav />
             </SheetContent>
           </Sheet>
-
-          <div className="flex flex-col items-center gap-0.5 md:hidden" translate="no">
-            <img src="/logo.png" alt="Engelog" className="h-9 w-auto rounded bg-white p-1" />
-            <div className="font-display text-[10px] font-bold leading-none" translate="no">PLANNER MATRIZ</div>
-            <div className="text-[8px] uppercase tracking-wider text-muted-foreground" translate="no">Fluxo de Máquinas</div>
-          </div>
-
+          <div className="md:hidden"><Brand compact /></div>
           <div className="ml-auto flex items-center gap-2">
-            
             <OfflineIndicator />
             <NotificationsBell />
             <UserMenu />
           </div>
         </header>
-
         <main className="flex-1 pb-20 md:pb-8">
           <RouteGuard>{children}</RouteGuard>
         </main>
       </div>
-
       <BottomNav />
     </div>
   );
 }
-
