@@ -1,4 +1,4 @@
-# Workshop Equipment Tracker
+# Gestão de Oficina de Equipamentos Móveis
 
 Este projeto nasceu de um problema que conheço bem no dia a dia da manutenção: informações espalhadas, acompanhamento manual e dificuldade para enxergar rapidamente o que está acontecendo com cada equipamento e cada ordem de serviço.
 
